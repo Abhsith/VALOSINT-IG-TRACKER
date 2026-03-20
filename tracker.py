@@ -1,9 +1,20 @@
 import json
 import os
+import sys
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime
 from typing import Dict, Set, Tuple, Optional
+
+try:
+    from colorama import init, Fore, Style
+except ImportError:
+    print("Module colorama belum terinstall.")
+    print("Install dulu dengan: pip install colorama")
+    sys.exit(1)
+
+init(autoreset=True)
 
 FOLLOWERS_FILE = "followers_1.json"
 FOLLOWING_FILE = "following.json"
@@ -16,8 +27,8 @@ PROFILES_TO_REVIEW_FILE = "profiles_to_review.txt"
 # =========================
 # INFO AKUN KAMU
 # =========================
-ACCOUNT_NAME = "Abdul Bhasit"
-ACCOUNT_USERNAME = "abhsith"
+ACCOUNT_NAME = "account name"
+ACCOUNT_USERNAME = "username"
 ACCOUNT_PROFILE_URL = f"https://instagram.com/{ACCOUNT_USERNAME}"
 
 # =========================
@@ -28,18 +39,93 @@ TELEGRAM_BOT_TOKEN = "ISI_BOT_TOKEN"
 TELEGRAM_CHAT_ID = "ISI_CHAT_ID"
 
 
+# =========================
+# UI / STYLE
+# =========================
+C1 = Fore.CYAN
+C2 = Fore.LIGHTBLUE_EX
+C3 = Fore.LIGHTMAGENTA_EX
+C4 = Fore.GREEN
+C5 = Fore.YELLOW
+C6 = Fore.RED
+CW = Fore.WHITE
+DIM = Style.DIM
+BR = Style.BRIGHT
+RS = Style.RESET_ALL
+
+
+def clear():
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def slow_print(text: str, delay: float = 0.004):
+    for ch in text:
+        print(ch, end="", flush=True)
+        time.sleep(delay)
+    print()
+
+
+def loading(text: str = "Initializing VALOSINT", steps: int = 28, delay: float = 0.03):
+    print()
+    print(f"{C2}[~]{RS} {text}")
+    bar_len = 28
+    for i in range(steps + 1):
+        filled = int((i / steps) * bar_len)
+        bar = f"{C3}{'█' * filled}{DIM}{'░' * (bar_len - filled)}{RS}"
+        percent = int((i / steps) * 100)
+        print(f"\r{C2}[~]{RS} [{bar}{RS}] {C4}{percent:3d}%{RS}", end="", flush=True)
+        time.sleep(delay)
+    print("\n")
+
+
+def pulse(text: str = "Loading modules", cycles: int = 3, delay: float = 0.2):
+    dots = ["   ", ".  ", ".. ", "..."]
+    for _ in range(cycles):
+        for d in dots:
+            print(f"\r{C2}[~]{RS} {text}{d}", end="", flush=True)
+            time.sleep(delay)
+    print("\r" + " " * 50, end="\r")
+
+
 def show_logo() -> None:
-    logo = r"""
+    clear()
+    logo = rf"""
+{C2}{BR}
 ██╗   ██╗ █████╗ ██╗      ██████╗ ███████╗██╗███╗   ██╗████████╗
 ██║   ██║██╔══██╗██║     ██╔═══██╗██╔════╝██║████╗  ██║╚══██╔══╝
 ██║   ██║███████║██║     ██║   ██║███████╗██║██╔██╗ ██║   ██║
 ╚██╗ ██╔╝██╔══██║██║     ██║   ██║╚════██║██║██║╚██╗██║   ██║
  ╚████╔╝ ██║  ██║███████╗╚██████╔╝███████║██║██║ ╚████║   ██║
   ╚═══╝  ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝
-
-        Instagram Intelligence Tracker • Telegram Edition
+{RS}
+{C3}{BR}               Instagram VAlOSINT Tracker • Cyber Edition{RS}
+{C2}      Track  •  Analyze  •  Compare  •  Report to Telegram{RS}
 """
     print(logo)
+    print(f"{C2}{'═' * 72}{RS}")
+    print(f"{C4}[SYSTEM]{RS} VALOSINT terminal initialized")
+    print(f"{C4}[USER  ]{RS} @{ACCOUNT_USERNAME}")
+    print(f"{C4}[TIME  ]{RS} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{C2}{'═' * 72}{RS}")
+
+
+def cyber_header(title: str):
+    print()
+    print(f"{C3}{'┏' + '━' * 68 + '┓'}{RS}")
+    print(f"{C3}┃{RS} {BR}{CW}{title.center(66)}{RS} {C3}┃{RS}")
+    print(f"{C3}{'┗' + '━' * 68 + '┛'}{RS}")
+
+
+def status(msg: str, level: str = "info"):
+    color = C2
+    icon = "[~]"
+    if level == "ok":
+        color, icon = C4, "[+]"
+    elif level == "warn":
+        color, icon = C5, "[!]"
+    elif level == "err":
+        color, icon = C6, "[-]"
+    print(f"{color}{icon}{RS} {msg}")
 
 
 def normalize_username(value: Optional[str]) -> Optional[str]:
@@ -180,28 +266,29 @@ def get_profile_info(username: str, cache: Dict[str, dict]) -> dict:
 
 
 def print_profile_list(title: str, usernames: Set[str], cache: Dict[str, dict], limit: Optional[int] = None) -> None:
+    cyber_header(title)
     usernames_sorted = sorted(usernames)
-    print(f"\n=== {title} ({len(usernames_sorted)}) ===")
 
     if not usernames_sorted:
-        print("- kosong -")
+        status("Kosong", "warn")
         return
 
     display = usernames_sorted if limit is None else usernames_sorted[:limit]
 
     for i, username in enumerate(display, start=1):
         profile = get_profile_info(username, cache)
-        print(f"\n{i}. Nama Akun  : {profile['name']}")
-        print(f"   Username   : @{profile['username']}")
-        print(f"   Followers  : {profile['followers']}")
-        print(f"   Following  : {profile['following']}")
-        print(f"   Link       : {profile['profile_url']}")
-        print(f"   Source     : {profile['source']}")
+        print(f"{C3}{i}.{RS} {BR}{profile['name']}{RS}")
+        print(f"   {C2}Username {RS}: @{profile['username']}")
+        print(f"   {C2}Followers{RS}: {profile['followers']}")
+        print(f"   {C2}Following{RS}: {profile['following']}")
+        print(f"   {C2}Link     {RS}: {profile['profile_url']}")
+        print(f"   {C2}Source   {RS}: {profile['source']}")
         if profile.get("note"):
-            print(f"   Note       : {profile['note']}")
+            print(f"   {C5}Note     {RS}: {profile['note']}")
+        print(f"{DIM}{'-' * 68}{RS}")
 
     if limit is not None and len(usernames_sorted) > limit:
-        print(f"\n... dan {len(usernames_sorted) - limit} akun lainnya")
+        status(f"... dan {len(usernames_sorted) - limit} akun lainnya", "warn")
 
 
 def write_profile_section(file, title: str, usernames: Set[str], cache: Dict[str, dict]) -> None:
@@ -239,7 +326,7 @@ def write_profiles_to_review(usernames: Set[str], cache: Dict[str, dict]) -> Non
                 count += 1
                 f.write(f"{count}. @{profile['username']} -> {profile['profile_url']}\n")
 
-    print(f"[+] File review dibuat: {PROFILES_TO_REVIEW_FILE}")
+    status(f"File review dibuat: {PROFILES_TO_REVIEW_FILE}", "ok")
 
 
 def send_telegram_message(text: str) -> Tuple[bool, str]:
@@ -270,7 +357,7 @@ def send_telegram_message(text: str) -> Tuple[bool, str]:
         return False, str(e)
 
 
-def send_telegram_chunks(lines, header="VALOSINT REPORT", chunk_size=10):
+def send_telegram_chunks(lines, header="VALOSINT REPORT", chunk_size=12):
     if not ENABLE_TELEGRAM or not lines:
         return
 
@@ -290,9 +377,9 @@ def send_telegram_chunks(lines, header="VALOSINT REPORT", chunk_size=10):
         text = f"{header}\nPart {i}/{len(chunks)}\n\n" + "\n".join(chunk)
         ok, info = send_telegram_message(text)
         if ok:
-            print(f"[+] Telegram part {i}/{len(chunks)} terkirim")
+            status(f"Telegram part {i}/{len(chunks)} terkirim", "ok")
         else:
-            print(f"[!] Telegram gagal: {info}")
+            status(f"Telegram gagal: {info}", "err")
 
 
 def build_profile_lines(title: str, usernames: Set[str], cache: Dict[str, dict]):
@@ -319,6 +406,9 @@ def build_profile_lines(title: str, usernames: Set[str], cache: Dict[str, dict])
 
 
 def create_current_snapshot() -> None:
+    cyber_header("CREATE SNAPSHOT")
+    pulse("Parsing Instagram export", cycles=2)
+
     followers_data = load_json(FOLLOWERS_FILE)
     following_data = load_json(FOLLOWING_FILE)
 
@@ -326,29 +416,33 @@ def create_current_snapshot() -> None:
     following = extract_usernames_from_following(following_data)
 
     if not followers and not following:
-        print("Data followers/following kosong atau format export tidak cocok.")
+        status("Data followers/following kosong atau format export tidak cocok.", "err")
         return
 
+    loading("Building snapshot", steps=24, delay=0.025)
     save_snapshot(CURRENT_SNAPSHOT, followers, following)
 
-    print("\n[+] Snapshot baru berhasil dibuat")
-    print(f"    File            : {CURRENT_SNAPSHOT}")
-    print(f"    Total followers : {len(followers)}")
-    print(f"    Total following : {len(following)}")
-    print(f"    Mutuals         : {len(followers & following)}")
-    print(f"    Not follow back : {len(following - followers)}")
+    status(f"Snapshot berhasil dibuat: {CURRENT_SNAPSHOT}", "ok")
+    print(f"{C2}Followers   {RS}: {len(followers)}")
+    print(f"{C2}Following   {RS}: {len(following)}")
+    print(f"{C2}Mutuals     {RS}: {len(followers & following)}")
+    print(f"{C2}Not Follow B{RS}: {len(following - followers)}")
 
 
 def compare_old_and_new(send_to_telegram=False) -> None:
+    cyber_header("COMPARE SNAPSHOT")
+
     if not os.path.exists(PREVIOUS_SNAPSHOT):
-        print(f"File {PREVIOUS_SNAPSHOT} tidak ditemukan.")
-        print("Rename snapshot lama kamu menjadi snapshot_old.json dulu.")
+        status(f"File {PREVIOUS_SNAPSHOT} tidak ditemukan.", "err")
+        status("Rename snapshot lama kamu menjadi snapshot_old.json dulu.", "warn")
         return
 
     if not os.path.exists(CURRENT_SNAPSHOT):
-        print(f"File {CURRENT_SNAPSHOT} tidak ditemukan.")
-        print("Jalankan menu 'Buat snapshot baru' dulu.")
+        status(f"File {CURRENT_SNAPSHOT} tidak ditemukan.", "err")
+        status("Jalankan menu 'Buat snapshot baru' dulu.", "warn")
         return
+
+    loading("Comparing datasets", steps=30, delay=0.02)
 
     old_followers, old_following = load_snapshot(PREVIOUS_SNAPSHOT)
     new_followers, new_following = load_snapshot(CURRENT_SNAPSHOT)
@@ -377,7 +471,7 @@ def compare_old_and_new(send_to_telegram=False) -> None:
         write_profile_section(f, "FOLLOWERS BARU", result["new_followers_gained"], cache)
         write_profile_section(f, "AKUN BARU YANG KAMU FOLLOW", result["new_following_added"], cache)
 
-    print(f"\n[+] Hasil berhasil disimpan ke: {RESULT_FILE}")
+    status(f"Hasil berhasil disimpan ke: {RESULT_FILE}", "ok")
 
     review_targets = (
         result["unfollowed_you"]
@@ -405,9 +499,9 @@ def compare_old_and_new(send_to_telegram=False) -> None:
         ]
         ok, info = send_telegram_message("\n".join(summary))
         if ok:
-            print("[+] Ringkasan berhasil dikirim ke Telegram")
+            status("Ringkasan berhasil dikirim ke Telegram", "ok")
         else:
-            print(f"[!] Gagal kirim ringkasan Telegram: {info}")
+            status(f"Gagal kirim ringkasan Telegram: {info}", "err")
 
         send_telegram_chunks(
             build_profile_lines("ORANG YANG UNFOLLOW KAMU", result["unfollowed_you"], cache),
@@ -422,16 +516,17 @@ def compare_old_and_new(send_to_telegram=False) -> None:
 
 
 def add_or_update_profile_cache() -> None:
+    cyber_header("PROFILE CACHE EDITOR")
     cache = load_profile_cache()
 
-    username = normalize_username(input("Username IG: ").strip())
+    username = normalize_username(input(f"{C2}Username IG{RS}: ").strip())
     if not username:
-        print("Username tidak valid.")
+        status("Username tidak valid.", "err")
         return
 
-    name = input("Nama akun: ").strip() or "N/A"
-    followers = input("Jumlah followers: ").strip() or "N/A"
-    following = input("Jumlah following: ").strip() or "N/A"
+    name = input(f"{C2}Nama akun{RS}: ").strip() or "N/A"
+    followers = input(f"{C2}Jumlah followers{RS}: ").strip() or "N/A"
+    following = input(f"{C2}Jumlah following{RS}: ").strip() or "N/A"
 
     cache[username] = {
         "name": name,
@@ -443,52 +538,32 @@ def add_or_update_profile_cache() -> None:
     }
 
     save_profile_cache(cache)
-    print(f"[+] Profile cache untuk @{username} berhasil disimpan.")
+    status(f"Profile cache untuk @{username} berhasil disimpan.", "ok")
 
 
 def show_help() -> None:
-    print("\nCatatan penggunaan:")
-    print(f"- Letakkan {FOLLOWERS_FILE} dan {FOLLOWING_FILE} di folder yang sama")
-    print(f"- Buat snapshot baru ke {CURRENT_SNAPSHOT}")
-    print(f"- Rename snapshot lama ke {PREVIOUS_SNAPSHOT}")
-    print("- Compare untuk melihat hasil perubahan")
-    print("- Isi profile cache manual untuk akun yang ingin tampil full info")
-    print("- Aktifkan Telegram jika ingin hasil dikirim ke bot")
+    cyber_header("HELP / USAGE")
+    print(f"{C2}- Letakkan {FOLLOWERS_FILE} dan {FOLLOWING_FILE} di folder yang sama{RS}")
+    print(f"{C2}- Buat snapshot baru ke {CURRENT_SNAPSHOT}{RS}")
+    print(f"{C2}- Rename snapshot lama ke {PREVIOUS_SNAPSHOT}{RS}")
+    print(f"{C2}- Compare untuk melihat perubahan unfollow / followers{RS}")
+    print(f"{C2}- Isi profile cache manual untuk akun yang ingin tampil full info{RS}")
+    print(f"{C2}- Aktifkan Telegram jika ingin report masuk ke bot{RS}")
+
+
+def boot_sequence():
+    show_logo()
+    pulse("Loading cyber modules", cycles=2, delay=0.12)
+    loading("Starting VALOSINT core", steps=20, delay=0.02)
 
 
 def main() -> None:
-    show_logo()
+    boot_sequence()
 
     while True:
-        print("\n=== MENU ===")
-        print("1. Buat snapshot baru")
-        print("2. Bandingkan snapshot lama vs baru")
-        print("3. Bandingkan + kirim ke Telegram")
-        print("4. Tambah/update profile cache manual")
-        print("5. Bantuan")
-        print("6. Keluar")
-
-        choice = input("\nPilih (1/2/3/4/5/6): ").strip()
-
-        try:
-            if choice == "1":
-                create_current_snapshot()
-            elif choice == "2":
-                compare_old_and_new(send_to_telegram=False)
-            elif choice == "3":
-                compare_old_and_new(send_to_telegram=True)
-            elif choice == "4":
-                add_or_update_profile_cache()
-            elif choice == "5":
-                show_help()
-            elif choice == "6":
-                print("Keluar dari VALOSINT Tracker.")
-                break
-            else:
-                print("Pilihan tidak valid.")
-        except Exception as e:
-            print(f"\n[!] Error: {e}")
-
-
-if __name__ == "__main__":
-    main()
+        print()
+        print(f"{C3}┌──────────────────────────────────────────────────────────────┐{RS}")
+        print(f"{C3}│{RS} {BR}{CW}VALOSINT MAIN MENU{RS}                                           {C3}│{RS}")
+        print(f"{C3}├──────────────────────────────────────────────────────────────┤{RS}")
+        print(f"{C3}│{RS} {C4}[1]{RS} Buat snapshot baru                                        {C3}│{RS}")
+        print(f"{C3}│{RS} {C4}[2]{RS} Bandingkan snapshot
