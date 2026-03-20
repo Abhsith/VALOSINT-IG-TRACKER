@@ -1,5 +1,6 @@
-<div align="center"><img src="assets/valosint-logo.png" width="120"/>VALOSINT — Instagram Intelligence Tracker
-
+<div align="center">
+<img src="assets/valosint-logo.png" width="300"/>
+</div>
 Smart • Safe • No Login • Telegram Ready
 
 </div>---
