@@ -3,8 +3,9 @@
 <img src="assets/valosint-logo.png" width="100%"/>
 
 # VALOSINT — Instagram Intelligence Tracker
-
-Smart • Safe • No Login • Telegram Ready
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 </div>
 Smart • Safe • No Login • Telegram Ready
