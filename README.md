@@ -84,6 +84,23 @@ VALOSINT-IG-TRACKER/
 
 ---
 
+## 📊 Example Output
+
+1. Nama Akun  : Example Store
+   Username   : @exampleuser1
+   Followers  : 12430
+   Following  : 214
+   Link       : https://instagram.com/exampleuser1
+
+2. Nama Akun  : N/A
+   Username   : @exampleuser2
+   Followers  : N/A
+   Following  : N/A
+   Link       : https://instagram.com/exampleuser2
+   Note       : Profile info unavailable
+
+---
+
 🔐 Security
 
 - No login
